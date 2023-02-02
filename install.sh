@@ -3,9 +3,34 @@
 # Stop executing if any error occurs
 set -e
 
+# Drive to install to 
+DRIVE="vda"
+
+# Hostname
+HOSTNAME="arch"
+
+# Username
+USERNAME="devadathan"
+
+# Password
+PASSWORD="pass"
+
+# Timezone
+TIMEZONE="Asia/Kolkata"
+
+# Keymap
+KEYMAP="us"
+
+# Partition type
+PARTITION_TYPE="btrfs"
+
+# Video driver
+VIDEO_DRIVER="amd"
+
+
+
 # Pre install stuff
 pre_install(){
-  source ./defaults.sh
   pacman -S --noconfirm archlinux-keyring
   pacman -Syy
   setfont ter-132n
@@ -41,27 +66,27 @@ EOF
 
 # Format drives
 format_drives(){
-  mkfs.fat -F32 /dev/$DRIVE"p1"
-  mkfs.btrfs /dev/$DRIVE"p2"
+  mkfs.fat -F32 /dev/$DRIVE"1"
+  mkfs.btrfs /dev/$DRIVE"2" -f
 }
 
 # Mount drives
 mount_drives(){
-  local boot_partiton="$DRIVE"p1
-  local btrfs_partiton="$DRIVE"p2
+  local boot_partiton="$DRIVE"1
+  local btrfs_partiton="$DRIVE"2
   mount /dev/"$btrfs_partiton" /mnt
 
   btrfs su cr /mnt/@
   btrfs su cr /mnt/@home
   btrfs su cr /mnt/@var
-  btrfs su cr /mnt/@.snapshots
+  # btrfs su cr /mnt/@.snapshots
 
   umount /mnt
 
   mount -o noatime,compress=zstd,space_cache=v2,subvol=@ /dev/"$btrfs_partiton" /mnt
   mkdir -p /mnt/{boot,home,.snapshots,var}
   mount -o noatime,compress=zstd,space_cache=v2,subvol=@home /dev/"$btrfs_partiton" /mnt/home
-  mount -o noatime,compress=zstd,space_cache=v2,subvol=@snapshots /dev/"$btrfs_partiton" /mnt/.snapshots
+  # mount -o noatime,compress=zstd,space_cache=v2,subvol=@snapshots /dev/"$btrfs_partiton" /mnt/.snapshots
   mount -o noatime,compress=zstd,space_cache=v2,subvol=@var /dev/"$btrfs_partiton" /mnt/var
 
   mount /dev/"$boot_partiton" /mnt/boot
