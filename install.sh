@@ -102,7 +102,7 @@ arch_chroot(){
   cp ./install.sh /mnt/root/install.sh
   chown root:root /mnt/root/install.sh
   chmod +x /mnt/root/install.sh
-  arch-chroot /mnt chroot
+  arch-chroot /mnt
   ./root/install.sh chroot
 }
 
@@ -141,6 +141,8 @@ set_hostname(){
 # Install packages
 install_packages(){
   pacman -S --noconfirm networkmanager \
+  grub \
+  efibootmgr \
   network-manager-applet \
   dialog wpa_supplicant \
   mtools \
@@ -152,7 +154,7 @@ install_packages(){
   xdg-user-dirs \
   base-devel \
   linux-headers \
-  git
+  git 
 }
 
 # Configure mkinitpio.conf
@@ -169,9 +171,9 @@ configure_grub(){
 
 # Add users
 setup_user(){
-  useradd -m-G  wheel,video,network,lp "$USERNAME"
-  echo "$PASSWORD" | passwd --stdin $USERNAME
-  sed -i 's/# %wheel ALL=(ALL) ALL/%wheel ALL=(ALL) ALL/' /etc/sudoers
+  useradd -mG  wheel,video,network,lp "$USERNAME"
+  echo -en "$PASSWORD\n$PASSWORD" | passwd $USERNAME
+  sed -i 's/# %wheel ALL=(ALL:ALL) ALL/ %wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 }
 
 # Setup daemons
@@ -181,22 +183,21 @@ set_daemons(){
   systemctl enable cups
 }
 
-# Hyprland specific setup
-hyprland_bootstrap(){
-  su $USERNAME
-  git clone https://github.com/devadathanmb/dotfiles ~
-  ./dotfiles/bootstrap.sh
+# Configure pacman after chrooting
+configure_pacman(){
+  pacman -S --noconfirm terminus-font
+  setfont ter-132n
+  echo "FONT=ter-132n" >> /etc/vconsole.conf
+  sed -i 's/^#ParallelDownloads/ParallelDownloads/' /etc/pacman.conf
+  sed '/[options]/ILoveCandy' /etc/pacman.conf
+  pacman -S --noconfirm reflector
+  reflector -c India --verbose --sort rate -l 10 --save /etc/pacman.d/mirrorlist
 }
 
-hyprland_afterinstall(){
-  sudo cp /usr/share/wayland-sessions/hyprland.desktop /usr/share/wayland-sessions/hyprland-wrapped.desktop 
-  cat > /etc/udev/rules.d/backlight.rules << EOL
-ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
-EOL
-  
-  cat > ~/.config/electron-flags.conf << EOL
---enable-features=UseOzonePlatform --ozone-platform=wayland
-EOL
+# Setup zram
+setup_zram(){
+  pacman -S --noconfirm zramd
+  systemctl enable --now zramd
 }
 
 # Before chroot
@@ -213,6 +214,7 @@ before_chroot(){
 
 # After chroot
 after_chroot(){
+  configure_pacman
   set_timezone
   set_locale
   set_hostname
@@ -222,13 +224,15 @@ after_chroot(){
   configure_grub
   setup_user
   set_daemons
-  # hyprland_bootstrap
-  # hyprland_afterinstall
+  setup_zram
 }
 
 if [ "$1" == "chroot" ]
 then
   after_chroot
+  clear
+  echo "Basic arch install complete."
+  echo "Now reboot and run your configuration script."
 else
   before_chroot
 fi
