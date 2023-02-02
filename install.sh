@@ -99,7 +99,7 @@ install_base(){
 
 # Chroot into installation
 arch_chroot(){
-  arch-chroot /mnt ./script.sh chroot
+  arch-chroot /mnt ./install.sh chroot
 }
 
 # Set timezone
@@ -116,10 +116,10 @@ set_locale(){
 # Set hosts
 set_hosts(){
   cat > /etc/hosts << EOF
-  127.0.0.1	    localhost
-  ::1		    localhost
-  127.0.0.1 	$HOSTNAME.localdomain	$HOSTNAME
-  EOF
+127.0.0.1	    localhost
+::1		    localhost
+127.0.0.1 	$HOSTNAME.localdomain	$HOSTNAME
+EOF
 }
 
 # Generate fstab
@@ -186,12 +186,12 @@ hyprland_bootstrap(){
 hyprland_afterinstall(){
   sudo cp /usr/share/wayland-sessions/hyprland.desktop /usr/share/wayland-sessions/hyprland-wrapped.desktop 
   cat > /etc/udev/rules.d/backlight.rules << EOL
-  ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
-  EOL
+ACTION=="add", SUBSYSTEM=="backlight", RUN+="/bin/chgrp video $sys$devpath/brightness", RUN+="/bin/chmod g+w $sys$devpath/brightness"
+EOL
   
   cat > ~/.config/electron-flags.conf << EOL
-  --enable-features=UseOzonePlatform --ozone-platform=wayland
-  EOL
+--enable-features=UseOzonePlatform --ozone-platform=wayland
+EOL
 }
 
 # Before chroot
