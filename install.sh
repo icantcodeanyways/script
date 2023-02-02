@@ -99,7 +99,11 @@ install_base(){
 
 # Chroot into installation
 arch_chroot(){
-  arch-chroot /mnt ./install.sh chroot
+  cp ./install.sh /mnt/root/install.sh
+  chown root:root /mnt/root/script.sh
+  chmod +x /mnt/root/script.sh
+  arch-chroot /mnt
+  ./install.sh chroot
 }
 
 # Set timezone
