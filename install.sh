@@ -21,7 +21,7 @@ remove_partitions(){
 
 # Partiton drives
 partition_drives(){
-  gdisk "$device" <<EOF
+  gdisk "/dev/$DRIVE" <<EOF
 o
 y
 n
@@ -41,15 +41,15 @@ EOF
 
 # Format drives
 format_drives(){
-  mkfs.fat -F32 $DRIVE"p1"
-  mkfs.btrfs $DRIVE"p2"
+  mkfs.fat -F32 /dev/$DRIVE"p1"
+  mkfs.btrfs /dev/$DRIVE"p2"
 }
 
 # Mount drives
 mount_drives(){
   local boot_partiton="$DRIVE"p1
   local btrfs_partiton="$DRIVE"p2
-  mount /dev/$DRIVE /mnt
+  mount /dev/"$btrfs_partiton" /mnt
 
   btrfs su cr /mnt/@
   btrfs su cr /mnt/@home
@@ -58,13 +58,13 @@ mount_drives(){
 
   umount /mnt
 
-  mount -o noatime,compress=zstd,space_cache=v2,subvol=@ /dev/$btrfs_partiton /mnt 
+  mount -o noatime,compress=zstd,space_cache=v2,subvol=@ /dev/"$btrfs_partiton" /mnt
   mkdir -p /mnt/{boot,home,.snapshots,var}
-  mount -o noatime,compress=zstd,space_cache=v2,subvol=@home /dev/$btrfs_partiton /mnt/home
-  mount -o noatime,compress=zstd,space_cache=v2,subvol=@snapshots /dev/$btrfs_partiton /mnt/.snapshots
-  mount -o noatime,compress=zstd,space_cache=v2,subvol=@var_log /dev/$btrfs_partiton /mnt/var
+  mount -o noatime,compress=zstd,space_cache=v2,subvol=@home /dev/"$btrfs_partiton" /mnt/home
+  mount -o noatime,compress=zstd,space_cache=v2,subvol=@snapshots /dev/"$btrfs_partiton" /mnt/.snapshots
+  mount -o noatime,compress=zstd,space_cache=v2,subvol=@var /dev/"$btrfs_partiton" /mnt/var
 
-  mount /dev/$boot_partiton /mnt/boot
+  mount /dev/"$boot_partiton" /mnt/boot
 }
 
 # Base install
