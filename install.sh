@@ -94,35 +94,36 @@ mount_drives(){
 
 # Base install
 install_base(){
-  pacstrap -K /mnt base base-devel vim btrfs-progs linux-firmware vim amd-ucode
+  pacstrap -K /mnt base base-devel vim btrfs-progs linux linux-firmware vim amd-ucode
 }
 
 # Chroot into installation
 arch_chroot(){
   cp ./install.sh /mnt/root/install.sh
-  chown root:root /mnt/root/script.sh
-  chmod +x /mnt/root/script.sh
-  arch-chroot /mnt
-  ./install.sh chroot
+  chown root:root /mnt/root/install.sh
+  chmod +x /mnt/root/install.sh
+  arch-chroot /mnt chroot
+  ./root/install.sh chroot
 }
 
 # Set timezone
 set_timezone(){
- ln -s "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
+ ln -sf "/usr/share/zoneinfo/$TIMEZONE" /etc/localtime
 }
 
 # Set locale
 set_locale(){
   echo "LANG=en_US.UTF-8" >> /etc/locale.conf
   sed -i 's/^#en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
+  locale-gen
 }
 
 # Set hosts
 set_hosts(){
-  cat > /etc/hosts << EOF
+  cat >> /etc/hosts << EOF
 127.0.0.1	    localhost
-::1		    localhost
-127.0.0.1 	$HOSTNAME.localdomain	$HOSTNAME
+::1		        localhost
+127.0.0.1   	$HOSTNAME.localdomain	$HOSTNAME
 EOF
 }
 
@@ -139,10 +140,10 @@ set_hostname(){
 
 # Install packages
 install_packages(){
-  pacman -S networkmanager \
+  pacman -S --noconfirm networkmanager \
   network-manager-applet \
   dialog wpa_supplicant \
-  mstools \
+  mtools \
   dosfstools \
   bluez \
   bluez-utils \
@@ -206,12 +207,12 @@ before_chroot(){
   format_drives
   mount_drives
   install_base
+  gen_fstab
   arch_chroot
 }
 
 # After chroot
 after_chroot(){
-  gen_fstab
   set_timezone
   set_locale
   set_hostname
